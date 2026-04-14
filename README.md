@@ -1,0 +1,380 @@
+import React, { useMemo, useState } from "react";
+import {
+  Search,
+  BookOpen,
+  Brain,
+  Heart,
+  GraduationCap,
+  Briefcase,
+  Shield,
+  Sparkles,
+  Filter,
+  ExternalLink,
+  Palette,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { motion } from "framer-motion";
+
+type Category =
+  | "Neurociencia"
+  | "Regulación emocional"
+  | "Aprendizaje y aula"
+  | "Vínculo y convivencia"
+  | "Autoconcepto y bienestar"
+  | "Hábitos y conducta"
+  | "Herramientas e intervención"
+  | "Procesos profundos"
+  | "Liderazgo y organizaciones"
+  | "Material educativo";
+
+type Impact = "Alto" | "Medio" | "Bajo";
+
+type DocumentItem = {
+  id: number;
+  title: string;
+  author: string;
+  category: Category;
+  tags: string[];
+  impact: Impact;
+  use: string;
+  description: string;
+  link: string;
+};
+
+const docs: DocumentItem[] = [
+  { id: 1, title: "El cuarto cerebro", author: "Gina Bribany", category: "Regulación emocional", tags: ["inteligencia emocional", "bienestar", "emociones"], impact: "Alto", use: "Formación / Consultoría", description: "Mirada integradora sobre vida emocional y desarrollo personal.", link: "https://drive.google.com/file/d/1BVMAKCJMqgiDUudtH9-N7yXRqv8pR3ar/preview" },
+  { id: 2, title: "No te ahogues en un vaso de agua", author: "Richard Carlson", category: "Autoconcepto y bienestar", tags: ["estrés", "bienestar", "vida cotidiana"], impact: "Medio", use: "RRSS / Trabajo individual", description: "Ideas breves para reducir estrés y relativizar preocupaciones diarias.", link: "https://drive.google.com/file/d/1G5Bg-RGILf_zjdxMtMV7CZGf-vvvKBre/preview" },
+  { id: 3, title: "Encuentra tu persona vitamina", author: "Marian Rojas Estapé", category: "Vínculo y convivencia", tags: ["vínculos", "apego", "bienestar"], impact: "Alto", use: "Taller / RRSS / Consultoría", description: "Explora cómo los vínculos impactan la salud emocional y el equilibrio.", link: "https://drive.google.com/file/d/1fPHVL5XE64KdsvSsbX68B4jGRBX3hyPo/preview" },
+  { id: 4, title: "Espérame en el arcoíris", author: "Laura Vidal", category: "Procesos profundos", tags: ["duelo", "pérdida", "animales"], impact: "Medio", use: "Trabajo individual / Taller", description: "Libro sobre duelo y elaboración emocional ante la pérdida de animales de compañía.", link: "https://drive.google.com/file/d/1OvYi-HU0rvKzir-ILM8nLvEY7J6lE5EG/preview" },
+  { id: 5, title: "¿Cuántos aún tienen esas heridas sin sanar?", author: "Desconocido", category: "Procesos profundos", tags: ["heridas", "sanación", "emociones"], impact: "Medio", use: "Trabajo individual", description: "Reflexión sobre heridas emocionales y procesos de reparación interna.", link: "https://drive.google.com/file/d/1S5RDsYsPVX3ea0oR_9dvthvG4zfmBVUp/preview" },
+  { id: 6, title: "¿Qué sabes de tu cerebro?", author: "Francisco J. Rubia", category: "Neurociencia", tags: ["cerebro", "memoria", "aprendizaje"], impact: "Alto", use: "Formación / Base teórica", description: "Introducción accesible a conceptos clave sobre cerebro, emoción y aprendizaje.", link: "https://drive.google.com/file/d/1ZRdUHijiMnpTbR6uJWHJDnP8wNz3mKCk/preview" },
+  { id: 7, title: "¿Quieres ser neurofeliz?", author: "Oriol Lugo y Ana Farré", category: "Autoconcepto y bienestar", tags: ["ansiedad", "miedo", "neurociencia"], impact: "Medio", use: "RRSS / Trabajo individual", description: "Propuestas para comprender miedo y ansiedad desde una mirada divulgativa.", link: "https://drive.google.com/file/d/1kwV1A1gqYHT0DDG9ufxKygRIyrmhgwfl/preview" },
+  { id: 8, title: "Zen de PNL", author: "Miguel Ángel León", category: "Herramientas e intervención", tags: ["pnl", "coaching", "cambio"], impact: "Medio", use: "Consultoría / Trabajo individual", description: "Recurso de coaching y PNL orientado a cambio personal y observación interna.", link: "https://drive.google.com/file/d/1mdis99A_ectd7EdUDCELnu-mfZK5vHGt/preview" },
+  { id: 9, title: "Inteligencia emocional 2.0", author: "Travis Bradberry y Jean Greaves", category: "Liderazgo y organizaciones", tags: ["inteligencia emocional", "medición", "habilidades"], impact: "Alto", use: "Formación / Liderazgo / Consultoría", description: "Manual práctico para desarrollar habilidades de inteligencia emocional.", link: "https://drive.google.com/file/d/1AiKUSKG-Rd94xg_007bXadHdmmsAAhhP/preview" },
+  { id: 10, title: "Guía de bolsillo de la teoría polivagal", author: "Stephen W. Porges", category: "Regulación emocional", tags: ["polivagal", "trauma", "sistema nervioso"], impact: "Alto", use: "Formación / Intervención", description: "Base clave para comprender regulación, seguridad y respuestas al estrés.", link: "https://drive.google.com/file/d/1Y4Q_OxrIKGNQ__9ixmH_ekx982Tn4y6a/preview" },
+  { id: 11, title: "10 cápsulas antiansiedad", author: "Sara Espejo", category: "Regulación emocional", tags: ["ansiedad", "autocuidado", "prácticas"], impact: "Medio", use: "RRSS / Taller", description: "Cápsulas breves y aplicables para acompañar ansiedad y autoobservación.", link: "https://drive.google.com/file/d/14_s171b9gHfCI3LaC20Lu2jvLB_VO5jA/preview" },
+  { id: 12, title: "10 claves para ser feliz", author: "Acción para la Felicidad", category: "Autoconcepto y bienestar", tags: ["felicidad", "bienestar", "hábitos"], impact: "Medio", use: "RRSS / Trabajo individual", description: "Principios simples para cultivar bienestar cotidiano y sentido.", link: "https://drive.google.com/file/d/1NPnwjJ550ProUY6lRPcQVY4i_UfZshap/preview" },
+  { id: 13, title: "15 claves para una autoestima indestructible", author: "Elías Berntsson e Ina Arakchiyska", category: "Autoconcepto y bienestar", tags: ["autoestima", "sanación", "ejercicios"], impact: "Medio", use: "Taller / Trabajo individual", description: "Ideas y ejercicios prácticos para fortalecer autoestima.", link: "https://drive.google.com/file/d/1GmoLUajX-oMAWblaEoZrGZrFGabR_03v/preview" },
+  { id: 14, title: "50 cápsulas de amor propio", author: "Sara Espejo", category: "Autoconcepto y bienestar", tags: ["amor propio", "autoestima", "rrss"], impact: "Medio", use: "RRSS / Taller", description: "Contenido breve y usable para trabajo de amor propio y divulgación.", link: "https://drive.google.com/file/d/1B9xmgrDF8yq46iS-eZTZg2-5HYmFnQfq/preview" },
+  { id: 15, title: "Neurociencias, neuroaprendizaje, las emociones y el aprendizaje", author: "Marilina Rotger", category: "Aprendizaje y aula", tags: ["neuroaprendizaje", "aula", "emociones"], impact: "Alto", use: "Aula / Docentes / Formación", description: "Cruza emoción y aprendizaje con foco concreto en el trabajo de aula.", link: "https://drive.google.com/file/d/1Y4Q_OxrIKGNQ__9ixmH_ekx982Tn4y6a/preview" },
+  { id: 16, title: "Descubriendo el cerebro", author: "Facundo Manes", category: "Neurociencia", tags: ["cerebro", "divulgación", "funcionamiento"], impact: "Medio", use: "Formación / Base teórica", description: "Material divulgativo para comprender funcionamiento cerebral.", link: "https://drive.google.com/file/d/14_s171b9gHfCI3LaC20Lu2jvLB_VO5jA/preview" },
+  { id: 17, title: "Alimenta tu cerebro", author: "David Perlmutter", category: "Neurociencia", tags: ["alimentación", "cerebro", "salud"], impact: "Medio", use: "Formación / RRSS", description: "Relación entre alimentación, salud cerebral y bienestar integral.", link: "https://drive.google.com/file/d/1NPnwjJ550ProUY6lRPcQVY4i_UfZshap/preview" },
+  { id: 18, title: "Educar las emociones", author: "Amanda Céspedes", category: "Aprendizaje y aula", tags: ["educación emocional", "niñez", "aula"], impact: "Alto", use: "Aula / Docentes / Familias", description: "Referencia clave para educación emocional en contexto escolar.", link: "https://drive.google.com/file/d/1GmoLUajX-oMAWblaEoZrGZrFGabR_03v/preview" },
+  { id: 19, title: "Aprender a gestionar nuestras relaciones con amor", author: "Paula Delgado", category: "Vínculo y convivencia", tags: ["relaciones", "límites", "responsabilidad afectiva"], impact: "Alto", use: "Taller / Consultoría / RRSS", description: "Herramientas para construir relaciones sanas desde amor y respeto.", link: "https://drive.google.com/file/d/1B9xmgrDF8yq46iS-eZTZg2-5HYmFnQfq/preview" },
+  { id: 20, title: "Aprender a sonreír", author: "Luis Carlos Bellido", category: "Autoconcepto y bienestar", tags: ["actitud", "bienestar", "desarrollo personal"], impact: "Bajo", use: "Trabajo individual", description: "Texto reflexivo sobre actitud y disposición interna.", link: "https://drive.google.com/file/d/1PTnlb4P66KgoDgPGuXj39Me0NiRP4Owt/preview" },
+  { id: 21, title: "Aprendiendo sobre las emociones", author: "Mónica Calderón y otros", category: "Aprendizaje y aula", tags: ["manual", "emociones", "infancia"], impact: "Alto", use: "Aula / Docentes", description: "Manual de educación emocional con enfoque didáctico para infancia.", link: "https://drive.google.com/file/d/1udtSTnvA69Fm0KmXDQvI1DzSSVA7cL5Z/preview" },
+  { id: 22, title: "Aprendizaje profundo", author: "Educación Moderna", category: "Aprendizaje y aula", tags: ["pensamiento crítico", "metacognición", "aula"], impact: "Alto", use: "Aula / Docentes", description: "Recurso breve sobre pensamiento crítico, creativo y metacognitivo.", link: "https://drive.google.com/file/d/1hEwnHbTLex-qMCc__tjPcAVA3guSkzFd/preview" },
+  { id: 23, title: "Aulas emocionalmente positivas", author: "Desconocido", category: "Aprendizaje y aula", tags: ["aula", "clima escolar", "emociones"], impact: "Alto", use: "Aula / Equipos directivos", description: "Propuestas para construir climas de aula emocionalmente seguros.", link: "https://drive.google.com/file/d/11ikMjAV7vXgLh313hlkmVFNzG8cG5ZqN/preview" },
+  { id: 24, title: "Autoestima inquebrantable", author: "Carolina Correa", category: "Autoconcepto y bienestar", tags: ["autoestima", "poder personal", "bienestar"], impact: "Medio", use: "Taller / Trabajo individual", description: "Claves para reconectar con el poder interior y fortalecer la autoestima.", link: "https://drive.google.com/file/d/1bYaGkqjZVH5FcWArgqWjoEX-XfhFXBIA/preview" },
+  { id: 25, title: "La sociedad del cansancio", author: "Byung-Chul Han", category: "Liderazgo y organizaciones", tags: ["burnout", "sociedad", "rendimiento"], impact: "Alto", use: "Formación / Consultoría", description: "Marco crítico para pensar exigencia, agotamiento y subjetividad contemporánea.", link: "https://drive.google.com/file/d/1TdomVnpxc9CUBk3z-ksBs29tnKKKW9-V/preview" },
+  { id: 26, title: "Calma emocional", author: "Bernardo Stamateas", category: "Regulación emocional", tags: ["miedo", "ansiedad", "inseguridad"], impact: "Medio", use: "Trabajo individual / Taller", description: "Recorre miedos frecuentes y propone ideas prácticas para enfrentarlos.", link: "https://drive.google.com/file/d/1h3L7SBUgVrSSQE8nlsJQ4YhhL6PAJlRy/preview" },
+  { id: 27, title: "Los hábitos de un cerebro feliz", author: "Loretta Graziano Breuning", category: "Hábitos y conducta", tags: ["dopamina", "serotonina", "hábitos"], impact: "Alto", use: "RRSS / Formación / Trabajo individual", description: "Explica cómo entrenar hábitos ligados a circuitos de recompensa y bienestar.", link: "https://drive.google.com/file/d/1c0xH8AL80OL6XVlg0k3oY0GAUw8ESB4l/preview" },
+  { id: 28, title: "Comida para las emociones", author: "Sandi Krstinic", category: "Autoconcepto y bienestar", tags: ["alimentación", "emociones", "cerebro"], impact: "Medio", use: "RRSS / Formación", description: "Cruza nutrición y bienestar emocional desde la neuroalimentación.", link: "https://drive.google.com/file/d/1fYc36imIV1kE4tECyixAF-Kvvp5xkm0Q/preview" },
+  { id: 29, title: "Cómo entrenar la fuerza de voluntad", author: "María Fernanda López", category: "Hábitos y conducta", tags: ["fuerza de voluntad", "decisiones", "conducta"], impact: "Medio", use: "Consultoría / Trabajo individual", description: "Explora la voluntad como recurso entrenable para cambiar hábitos.", link: "https://drive.google.com/file/d/1QORyg8R2aSy--c48fjhg6uI_g_kcOK4l/preview" },
+  { id: 30, title: "Cómo hacer que te pasen cosas buenas", author: "Marian Rojas Estapé", category: "Autoconcepto y bienestar", tags: ["cortisol", "emociones", "bienestar"], impact: "Alto", use: "RRSS / Taller / Trabajo individual", description: "Libro muy usable para explicar estrés, atención y bienestar emocional.", link: "https://drive.google.com/file/d/1xHk9PjVlofbMVzIlwLl2gPMhLTONqHNv/preview" },
+  { id: 31, title: "Cómo mandar a la mierda en forma educada", author: "Alba Cardalda", category: "Vínculo y convivencia", tags: ["límites", "asertividad", "relaciones"], impact: "Medio", use: "Taller / RRSS", description: "Aproximación práctica y directa al establecimiento de límites.", link: "https://drive.google.com/file/d/1zBz1R-9xDMGx6iANBLu6MoeN1tdP1R8Y/preview" },
+  { id: 32, title: "Cómo sanarte cuando nadie más puede hacerlo", author: "Amy B. Scher", category: "Procesos profundos", tags: ["sanación", "bloqueos", "autoconocimiento"], impact: "Medio", use: "Trabajo individual", description: "Método orientado a sanar bloqueos emocionales desde el trabajo personal.", link: "https://drive.google.com/file/d/1_UjIWD79an23HdNHuGCo_9FqnZDrKNV2/preview" },
+  { id: 33, title: "Cuando ya no estás", author: "Laura Vidal", category: "Procesos profundos", tags: ["duelo", "pérdida", "animales"], impact: "Medio", use: "Trabajo individual / Taller", description: "Aborda el duelo por animales de compañía desde una mirada sensible.", link: "https://drive.google.com/file/d/1nB5HwsHr2FWLfjeKpqKhEJdsdxowU3PK/preview" },
+  { id: 34, title: "Cuídate para crecer", author: "Desconocido", category: "Autoconcepto y bienestar", tags: ["autocuidado", "crecimiento", "bienestar"], impact: "Medio", use: "RRSS / Taller", description: "Recurso práctico de autocuidado y crecimiento personal.", link: "https://drive.google.com/file/d/1F4_9Xt1G9-clwhK5qgGRMzWl8xa_PCPd/preview" },
+  { id: 35, title: "Deja de ser tú", author: "Joe Dispenza", category: "Hábitos y conducta", tags: ["cambio", "mente", "reprogramación"], impact: "Medio", use: "Trabajo individual / RRSS", description: "Explora cambio personal y hábitos mentales desde una mirada transformacional.", link: "https://drive.google.com/file/d/1UCr28rAmCtucgCj96vwSB3zfKdWMm6gh/preview" },
+  { id: 36, title: "Deshacer la ansiedad", author: "Judson Brewer", category: "Regulación emocional", tags: ["ansiedad", "hábitos", "mindfulness"], impact: "Alto", use: "Taller / Consultoría / RRSS", description: "Aborda la ansiedad como un bucle de hábito y propone herramientas prácticas para interrumpirlo.", link: "https://drive.google.com/file/d/1viE07Ly-2QixExVW-bZjTmHNssBTcRvo/preview" },
+  { id: 37, title: "Domina tus emociones", author: "Thibaut Meurisse", category: "Regulación emocional", tags: ["emociones", "negatividad", "prácticas"], impact: "Medio", use: "Trabajo individual / Taller", description: "Guía práctica para comprender y modular estados emocionales.", link: "https://drive.google.com/file/d/1IUkwmxddRIU4Hnz1RgrJXP-VNI6KTOdf/preview" },
+  { id: 38, title: "Dopamina", author: "Daniel Z. Lieberman y Michael E. Long", category: "Neurociencia", tags: ["dopamina", "motivación", "adicción"], impact: "Alto", use: "Formación / RRSS / Consultoría", description: "Explica deseo, recompensa, creatividad y adicción desde la dopamina.", link: "https://drive.google.com/file/d/1U8Ls8QGZmaL-odfob5jmOPWIlTrdJz7N/preview" },
+  { id: 39, title: "Educar con cerebro", author: "Desconocido", category: "Aprendizaje y aula", tags: ["crianza", "desarrollo", "aprendizaje"], impact: "Alto", use: "Familias / Aula / Formación", description: "Aporta claves de crianza y desarrollo cerebral en infancia.", link: "https://drive.google.com/file/d/1yTqgOhQUBERp-Pt5dsEJuG-H8nzp8jlf/preview" },
+  { id: 40, title: "El arte de gestionar tus emociones", author: "Desconocido", category: "Regulación emocional", tags: ["emociones", "gestión", "autoconocimiento"], impact: "Medio", use: "Trabajo individual / Taller", description: "Material práctico para identificar y gestionar estados emocionales.", link: "https://drive.google.com/file/d/1O0LgVSM7_zuPP8ItXvrmK2zgU9mmRGHz/preview" },
+  { id: 41, title: "El camino de la escritura", author: "Julia Cameron", category: "Herramientas e intervención", tags: ["escritura", "creatividad", "procesamiento emocional"], impact: "Medio", use: "Trabajo individual / Taller", description: "La escritura como herramienta de creatividad, foco y procesamiento interno.", link: "https://drive.google.com/file/d/1AytX_52MAvYm-COLL0ZLwttfwyGTqwZA/preview" },
+  { id: 42, title: "El camino de las lágrimas", author: "Jorge Bucay", category: "Procesos profundos", tags: ["duelo", "pérdida", "crecimiento"], impact: "Alto", use: "Taller / Trabajo individual", description: "Recorrido claro y accesible por el proceso de duelo y pérdida.", link: "https://drive.google.com/file/d/1Fw8O7s2bY3Tp2PZJu-gRGhnxHdhPU6vm/preview" },
+  { id: 43, title: "El cerebro del niño", author: "Daniel J. Siegel y Tina Payne Bryson", category: "Aprendizaje y aula", tags: ["niñez", "crianza", "regulación"], impact: "Alto", use: "Aula / Docentes / Familias", description: "Estrategias claras para comprender el desarrollo cerebral infantil y acompañar mejor las emociones.", link: "https://drive.google.com/file/d/1QQCPgiazo1pDRdZ40Nywd-HvpGJw9Joe/preview" },
+  { id: 44, title: "El cerebro optimista", author: "Mikel Alonso", category: "Autoconcepto y bienestar", tags: ["optimismo", "neurociencia", "bienestar"], impact: "Medio", use: "RRSS / Formación", description: "Cómo una mirada optimista se relaciona con procesos cerebrales y bienestar.", link: "https://drive.google.com/file/d/1ypYHJwBvlIKUigOp3zBcuxM_99N1EXk3/preview" },
+  { id: 45, title: "El cuerpo nunca miente", author: "Alice Miller", category: "Procesos profundos", tags: ["trauma", "cuerpo", "infancia"], impact: "Alto", use: "Formación / Trabajo individual", description: "Relación entre trauma temprano, cuerpo y emociones reprimidas.", link: "https://drive.google.com/file/d/1CHU449X82yUMG2T8CEzuG8kbDzfgEjO9/preview" },
+  { id: 46, title: "El miedo es de valientes", author: "Julio de la Iglesia", category: "Regulación emocional", tags: ["miedo", "coraje", "acción"], impact: "Medio", use: "Taller / RRSS", description: "Trabaja el miedo como experiencia movilizadora y entrenable.", link: "https://drive.google.com/file/d/1E-3kDNbVSiD7pXHgZSxXF4-qfA-KqfEn/preview" },
+  { id: 47, title: "El poder del pensamiento positivo", author: "Norman Vincent Peale", category: "Autoconcepto y bienestar", tags: ["pensamiento", "actitud", "bienestar"], impact: "Bajo", use: "Trabajo individual", description: "Clásico del pensamiento positivo y actitud mental.", link: "https://drive.google.com/file/d/1V-V-3Abvn80PZwHHM5kfZyCxAePdQ-Ix/preview" },
+  { id: 48, title: "El error de Descartes", author: "Antonio Damasio", category: "Neurociencia", tags: ["cuerpo", "emoción", "mente"], impact: "Alto", use: "Base teórica / Formación", description: "Libro fundamental para comprender que emoción, cuerpo y cognición no funcionan por separado.", link: "https://drive.google.com/file/d/1QAysMY6OzeSE-dX8qLGOmvd3pRjuBzhM/preview" },
+  { id: 49, title: "Emociones y afectividad", author: "Marina Ariza", category: "Neurociencia", tags: ["afectividad", "metodología", "emociones"], impact: "Alto", use: "Base teórica / Investigación", description: "Obra académica para profundizar en itinerarios metodológicos sobre afectividad.", link: "https://drive.google.com/file/d/1Ok9AIl4vGwiozXT04VPGgiMQqWEoyfZ0/preview" },
+  { id: 50, title: "Enciende tu cerebro", author: "Caroline Leaf", category: "Hábitos y conducta", tags: ["pensamiento", "cambio", "mente"], impact: "Medio", use: "Trabajo individual / RRSS", description: "Propuestas de cambio mental y observación de patrones de pensamiento.", link: "https://drive.google.com/file/d/1fEr9Gc_EHOU3l1_LD8QAulVHobZbl_tp/preview" },
+  { id: 51, title: "Estar bien aquí y ahora", author: "Luis Rojas Marcos", category: "Autoconcepto y bienestar", tags: ["presente", "bienestar", "salud mental"], impact: "Medio", use: "Trabajo individual / RRSS", description: "Reflexiones para cultivar bienestar psicológico en el presente.", link: "https://drive.google.com/file/d/1Ww7VH-otr9yADuB_cmcGKXFJsXEXQsv0/preview" },
+  { id: 52, title: "Hábitos atómicos", author: "James Clear", category: "Hábitos y conducta", tags: ["conducta", "cambio", "hábitos"], impact: "Alto", use: "Consultoría / RRSS / Trabajo individual", description: "Marco simple y útil para diseñar cambios sostenibles a partir de pequeñas acciones.", link: "https://drive.google.com/file/d/10hn34Rn2vIbANFvumHmJX5O48I71cNvE/preview" },
+  { id: 53, title: "Heridas emocionales", author: "Bernardo Stamateas", category: "Procesos profundos", tags: ["heridas", "sanación", "emociones"], impact: "Alto", use: "Taller / Trabajo individual", description: "Aborda heridas emocionales frecuentes y procesos de recuperación.", link: "https://drive.google.com/file/d/1a5-TCGzkVxMK1KaZLDGYcQ7pJsMjo2jF/preview" },
+  { id: 54, title: "Expresar y regular sentimientos", author: "CPEIP", category: "Herramientas e intervención", tags: ["docentes", "actividades", "contención"], impact: "Alto", use: "Aula / Equipos directivos / Intervención", description: "Actividades prácticas dirigidas a equipos educativos para contención socioemocional.", link: "https://drive.google.com/file/d/1MnwW1xpaQ68BFYvKWWil0fOwl19rm_dR/preview" },
+  { id: 55, title: "Felicidad (Serie Inteligencia Emocional HBR)", author: "Harvard Business Review", category: "Liderazgo y organizaciones", tags: ["felicidad", "trabajo", "emociones"], impact: "Medio", use: "Liderazgo / Formación", description: "Selección de textos sobre bienestar emocional en contextos profesionales.", link: "https://drive.google.com/file/d/1-yCtAt3FtanxQi_4aScrixSJF5__MYqi/preview" },
+  { id: 56, title: "Inteligencia emocional", author: "Daniel Goleman", category: "Liderazgo y organizaciones", tags: ["liderazgo", "autoconciencia", "empatía"], impact: "Alto", use: "Formación / Liderazgo / Consultoría", description: "Texto base para trabajar competencias emocionales en personas, equipos y organizaciones.", link: "https://drive.google.com/file/d/1T_gWjpIKh6jiciwk9d6uaTmREqiPBh37/preview" },
+  { id: 57, title: "Inteligencia espiritual para líderes", author: "Ricardo Perret", category: "Liderazgo y organizaciones", tags: ["liderazgo", "propósito", "abundancia"], impact: "Bajo", use: "Liderazgo / Trabajo individual", description: "Mirada sobre liderazgo y sentido desde la inteligencia espiritual.", link: "https://drive.google.com/file/d/1GBaEkxBW5vpYLoqpDy-BFZndFiyPjlIJ/preview" },
+  { id: 58, title: "La inteligencia emocional en el éxito empresarial", author: "Desconocido", category: "Liderazgo y organizaciones", tags: ["empresa", "supply chain", "inteligencia emocional"], impact: "Medio", use: "Consultoría / Liderazgo", description: "Aplicación de inteligencia emocional en entornos organizacionales y de gestión.", link: "https://drive.google.com/file/d/1mfv-8ltbj5ew08kJHK_xbSnQAR2YOW9G/preview" },
+  { id: 59, title: "La regulación de las emociones", author: "José Miguel Mestre Navas", category: "Regulación emocional", tags: ["adaptación", "regulación", "social"], impact: "Alto", use: "Formación / Consultoría", description: "Manual sobre regulación emocional como vía de adaptación personal y social.", link: "https://drive.google.com/file/d/1gq8ZbnIHdA0391dTrtY1XgrEKfqtqrVY/preview" },
+  { id: 60, title: "La rueda de la vida", author: "Elisabeth Kübler-Ross", category: "Procesos profundos", tags: ["muerte", "duelo", "sentido"], impact: "Medio", use: "Trabajo individual / Formación", description: "Legado espiritual y humano sobre vida, muerte y reconciliación con la pérdida.", link: "https://drive.google.com/file/d/1WNtlxReiyqjnb4_0cOHj0JjzXq1LDYVv/preview" },
+  { id: 61, title: "La vida secreta de la mente", author: "Mariano Sigman", category: "Neurociencia", tags: ["mente", "decisiones", "aprendizaje"], impact: "Alto", use: "Formación / Base teórica", description: "Recorrido divulgativo por decisiones, conciencia, sueños y aprendizaje.", link: "https://drive.google.com/file/d/1kect5MhP8O-ELG5ufowwzvmah2QdSl2i/preview" },
+  { id: 62, title: "Libertad emocional", author: "Desconocido", category: "Autoconcepto y bienestar", tags: ["libertad emocional", "autoconocimiento", "bienestar"], impact: "Medio", use: "Trabajo individual", description: "Recurso orientado a autonomía afectiva y libertad emocional.", link: "https://drive.google.com/file/d/1RHCOP3UzLIc_A0ZBqoLtytqyy4OaFmr4/preview" },
+  { id: 63, title: "Lo bueno de tener un mal día", author: "Anabel González", category: "Regulación emocional", tags: ["emociones", "equilibrio", "regulación"], impact: "Alto", use: "Taller / Consultoría / RRSS", description: "Ayuda a comprender emociones difíciles y recuperar equilibrio interno.", link: "https://drive.google.com/file/d/1sKooKB9vHJ2062JjFdG1Mvo5b9e7NLi0/preview" },
+  { id: 64, title: "Neurociencia: emoción y aprendizaje", author: "Pedro Barrientos Gutiérrez", category: "Aprendizaje y aula", tags: ["neurociencia", "emoción", "aprendizaje"], impact: "Alto", use: "Aula / Formación / Docentes", description: "Texto de base para vincular emoción, cerebro y procesos de aprendizaje.", link: "https://drive.google.com/file/d/1O-vKwQUNrMj2AfsGiEGOT16KRn8QOvk7/preview" },
+  { id: 65, title: "El monstruo de colores", author: "Anna Llenas", category: "Material educativo", tags: ["infancia", "emociones", "didáctico"], impact: "Alto", use: "Aula / Familias / Material educativo", description: "Recurso infantil clave para nombrar y ordenar emociones con niños y niñas.", link: "https://drive.google.com/file/d/10ADRGSZyeH__t5CEghHrWjZAs4CO1cfm/preview" },
+  { id: 66, title: "Lo que toda mujer debe saber acerca de los hombres", author: "Desconocido", category: "Vínculo y convivencia", tags: ["género", "relaciones", "masculinidades"], impact: "Bajo", use: "Trabajo individual / RRSS", description: "Reflexiones sobre vínculos y masculinidades desde una perspectiva divulgativa.", link: "https://drive.google.com/file/d/17OsUBexrUOBx0FYw1UU9M31faaKd6nAN/preview" },
+  { id: 67, title: "Los desafíos de la memoria", author: "Joshua Foer", category: "Neurociencia", tags: ["memoria", "aprendizaje", "mente"], impact: "Medio", use: "Formación / RRSS", description: "Explora cómo funciona la memoria y cómo puede entrenarse.", link: "https://drive.google.com/file/d/10KEzf63OFV1eyq0t71Og7DnrOyF5_ALW/preview" },
+  { id: 68, title: "Manual violencia basada en género - Módulo 4", author: "Desconocido", category: "Vínculo y convivencia", tags: ["violencia de género", "polivagal", "trauma"], impact: "Alto", use: "Formación / Consultoría", description: "Módulo que integra teoría polivagal y comprensión del trauma en violencia de género.", link: "https://drive.google.com/file/d/1H8pyx0OcRj87yyGtg29sYTsH8AtahQkJ/preview" },
+  { id: 69, title: "Módulo de Neurociencias", author: "Ministerio de Educación", category: "Neurociencia", tags: ["educación", "cerebro", "aprendizaje"], impact: "Alto", use: "Formación / Docentes", description: "Módulo formativo con foco en neurociencias aplicadas a educación.", link: "https://drive.google.com/file/d/1BZkbfnbRYhBfgyHd30v49RihLi2f8Cux/preview" },
+  { id: 70, title: "Neurociencia para educadores", author: "Desconocido", category: "Aprendizaje y aula", tags: ["educadores", "neurociencia", "aula"], impact: "Alto", use: "Docentes / Formación / Aula", description: "Material para traducir hallazgos de neurociencia al trabajo educativo.", link: "https://drive.google.com/file/d/1PVbNFw8lyPOfluTEu4OP_g7-4VBLp3-I/preview" },
+];
+
+const categories = [
+  "Todas",
+  "Neurociencia",
+  "Regulación emocional",
+  "Aprendizaje y aula",
+  "Vínculo y convivencia",
+  "Autoconcepto y bienestar",
+  "Hábitos y conducta",
+  "Herramientas e intervención",
+  "Procesos profundos",
+  "Liderazgo y organizaciones",
+  "Material educativo",
+] as const;
+
+type CategoryFilter = (typeof categories)[number];
+
+function FlichLogo({ className = "h-11 w-11" }: { className?: string }) {
+  return (
+    <img
+      src="/mnt/data/Logo FLICH Vectorizado.png"
+      alt="FLICH logo"
+      className={className + " object-contain"}
+      draggable={false}
+    />
+  );
+}
+
+const categoryMeta: Record<Category, { icon: React.ComponentType<{ className?: string }>; emoji: string }> = {
+  "Neurociencia": { icon: Brain, emoji: "🧠" },
+  "Regulación emocional": { icon: Shield, emoji: "🔥" },
+  "Aprendizaje y aula": { icon: GraduationCap, emoji: "👩‍🏫" },
+  "Vínculo y convivencia": { icon: Heart, emoji: "💛" },
+  "Autoconcepto y bienestar": { icon: Sparkles, emoji: "🌱" },
+  "Hábitos y conducta": { icon: BookOpen, emoji: "🔁" },
+  "Herramientas e intervención": { icon: Filter, emoji: "🛠️" },
+  "Procesos profundos": { icon: Heart, emoji: "🩶" },
+  "Liderazgo y organizaciones": { icon: Briefcase, emoji: "🧭" },
+  "Material educativo": { icon: Palette, emoji: "🎨" },
+};
+
+function getCategoryCounts(items: DocumentItem[]) {
+  const counts = Object.fromEntries(categories.map((item) => [item, 0])) as Record<CategoryFilter, number>;
+
+  for (const doc of items) {
+    counts[doc.category] += 1;
+    counts.Todas += 1;
+  }
+
+  return counts;
+}
+
+function filterDocuments(items: DocumentItem[], query: string, category: CategoryFilter) {
+  const normalizedQuery = query.trim().toLowerCase();
+
+  return items.filter((doc) => {
+    const matchesQuery =
+      normalizedQuery.length === 0 ||
+      doc.title.toLowerCase().includes(normalizedQuery) ||
+      doc.author.toLowerCase().includes(normalizedQuery) ||
+      doc.tags.some((tag) => tag.toLowerCase().includes(normalizedQuery)) ||
+      doc.description.toLowerCase().includes(normalizedQuery);
+
+    const matchesCategory = category === "Todas" || doc.category === category;
+    return matchesQuery && matchesCategory;
+  });
+}
+
+// Small self-checks to catch common regressions during development.
+const __counts = getCategoryCounts(docs);
+console.assert(__counts.Todas === docs.length, "The total count must match the number of documents.");
+console.assert(filterDocuments(docs, "ansiedad", "Todas").length > 0, "Search should return results for known tags.");
+console.assert(filterDocuments(docs, "", "Material educativo").every((doc) => doc.category === "Material educativo"), "Category filter should only return matching documents.");
+
+export default function BibliotecaEducacionEmocionalApp() {
+  const [query, setQuery] = useState("");
+  const [category, setCategory] = useState<CategoryFilter>("Todas");
+
+  const categoryCounts = useMemo(() => getCategoryCounts(docs), []);
+  const filteredDocs = useMemo(() => filterDocuments(docs, query, category), [query, category]);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-[#f3f7fb] via-white to-[#f8fafc] text-slate-900">
+      <header className="sticky top-0 z-30 border-b border-[#174f8a]/10 bg-white/90 shadow-[0_8px_30px_rgba(23,79,138,0.08)] backdrop-blur-xl supports-[backdrop-filter]:bg-white/80">
+        <div className="mx-auto max-w-6xl px-4 py-4 md:px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="flex flex-col gap-4"
+          >
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-2xl border border-[#174f8a]/15 bg-gradient-to-br from-white to-[#f3f7fb] shadow-sm">
+                  <FlichLogo className="h-11 w-11" />
+                </div>
+                <div>
+                  <div className="mb-1 flex flex-wrap items-center gap-2">
+                    <Badge className="rounded-full border-0 bg-[#174f8a] px-3 py-1 text-white shadow-sm hover:bg-[#174f8a]">FLICH</Badge>
+                    <Badge variant="outline" className="rounded-full border-[#ef3b46]/30 bg-[#fff4f5] text-[#ef3b46]">
+                      Educación emocional para América Latina
+                    </Badge>
+                  </div>
+                  <h1 className="text-2xl font-bold tracking-tight text-[#174f8a] md:text-3xl">
+                    Biblioteca de Educación Emocional
+                  </h1>
+                  <p className="mt-1 max-w-3xl text-sm text-slate-600 md:text-base">
+                    Acceso móvil a documentos, recursos y materiales formativos con navegación rápida por categorías.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <Card className="rounded-2xl border border-[#174f8a]/10 bg-white shadow-sm">
+                  <CardContent className="p-3">
+                    <div className="text-xs text-slate-500">Documentos</div>
+                    <div className="text-lg font-bold text-[#174f8a]">{categoryCounts.Todas}</div>
+                  </CardContent>
+                </Card>
+                <Card className="rounded-2xl border border-[#174f8a]/10 bg-white shadow-sm">
+                  <CardContent className="p-3">
+                    <div className="text-xs text-slate-500">Categorías</div>
+                    <div className="text-lg font-bold text-[#174f8a]">{Object.keys(categoryMeta).length}</div>
+                  </CardContent>
+                </Card>
+                <Card className="col-span-2 rounded-2xl border-slate-200 bg-white shadow-sm sm:col-span-1">
+                  <CardContent className="p-3">
+                    <div className="text-xs text-slate-500">Vista actual</div>
+                    <div className="truncate text-lg font-bold text-[#ef3b46]">{category}</div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-[1fr_220px]">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#174f8a]/50" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Buscar por título, autor, tema o palabra clave"
+              className="h-11 rounded-2xl border-[#174f8a]/15 bg-white pl-10 shadow-sm focus-visible:ring-[#174f8a]"
+            />
+          </div>
+
+          <Select value={category} onValueChange={(value) => setCategory(value as CategoryFilter)}>
+            <SelectTrigger className="h-11 rounded-2xl border-[#174f8a]/15 bg-white shadow-sm focus:ring-[#174f8a]">
+              <SelectValue placeholder="Filtrar por categoría" />
+            </SelectTrigger>
+            <SelectContent>
+              {categories.map((item) => (
+                <SelectItem key={item} value={item}>
+                  {item} ({categoryCounts[item]})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+                  </motion.div>
+        </div>
+      </header>
+
+      <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
+        <div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+          {Object.entries(categoryMeta).map(([name, meta]) => {
+            const Icon = meta.icon;
+            const typedName = name as Category;
+
+            return (
+              <Card key={name} className="rounded-2xl border border-[#174f8a]/10 bg-white shadow-sm transition hover:border-[#174f8a]/20 hover:shadow-md">
+                <CardContent className="flex items-center gap-3 p-4">
+                  <div className="rounded-2xl bg-gradient-to-br from-[#174f8a]/8 to-[#1ea4c6]/12 p-3 text-[#174f8a]">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-slate-500">Categoría</div>
+                    <div className="font-medium leading-tight">{name}</div>
+                    <div className="mt-1 text-sm font-semibold text-[#ef3b46]">
+                      {categoryCounts[typedName]} documento{categoryCounts[typedName] === 1 ? "" : "s"}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {filteredDocs.map((doc, index) => {
+            const Icon = categoryMeta[doc.category]?.icon || BookOpen;
+
+            return (
+              <motion.div
+                key={doc.id}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.04 }}
+              >
+                <Card className="h-full rounded-3xl border border-[#174f8a]/10 bg-white shadow-sm transition hover:-translate-y-1 hover:border-[#1ea4c6]/30 hover:shadow-[0_14px_34px_rgba(23,79,138,0.12)]">
+                  <CardHeader className="space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="rounded-2xl bg-gradient-to-br from-[#174f8a]/8 to-[#1ea4c6]/12 p-3 text-[#174f8a]">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <Badge variant="secondary" className="rounded-full border-0 bg-[#fff4f5] px-3 py-1 text-[#ef3b46]">
+                        {doc.impact}
+                      </Badge>
+                    </div>
+                    <div>
+                      <CardTitle className="text-xl leading-tight">{doc.title}</CardTitle>
+                      <p className="mt-1 text-sm text-slate-500">{doc.author}</p>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    <Badge className="rounded-full bg-[#174f8a] text-white hover:bg-[#174f8a]">
+                      {doc.category}
+                    </Badge>
+
+                    <p className="text-sm leading-6 text-slate-600">{doc.description}</p>
+
+                    <div>
+                      <div className="mb-2 text-sm font-medium">Temas</div>
+                      <div className="flex flex-wrap gap-2">
+                        {doc.tags.map((tag) => (
+                          <Badge key={tag} variant="outline" className="rounded-full">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-[#1ea4c6]/15 bg-gradient-to-r from-[#f3fbfe] to-[#f8fcff] p-3 text-sm text-slate-600">
+                      <span className="font-medium text-[#174f8a]">Uso sugerido:</span> {doc.use}
+                    </div>
+
+                    <Button asChild className="h-11 w-full rounded-2xl bg-[#ef3b46] text-white shadow-sm hover:bg-[#d92f3a]">
+                      <a href={doc.link} target="_blank" rel="noreferrer">
+                        Abrir documento <ExternalLink className="ml-2 h-4 w-4" />
+                      </a>
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {filteredDocs.length === 0 && (
+          <Card className="mt-6 rounded-3xl border border-[#ef3b46]/10 bg-white shadow-sm">
+            <CardContent className="p-10 text-center">
+              <p className="text-lg font-medium text-[#174f8a]">No encontré documentos con ese filtro.</p>
+              <p className="mt-2 text-slate-500">Prueba con otra categoría o una búsqueda más amplia.</p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
